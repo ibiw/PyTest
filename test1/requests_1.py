@@ -38,13 +38,15 @@ class ContentRequest(object):
                 yield (i * offset, '')
 
     # {'Content': 'Bytes=0-81421', 'Accept-Encoding': '*'}
-    @staticmethod
-    def get_headers(offsets):
-        for item in offsets:
-            # print(item)
-            # yield {'Range': 'Bytes=%s-%s' % item, 'Accept-Encoding': '*'}
-            # format(*item) is same as % item that put the values in tuple to {} one by one
-            yield {'Range': 'Bytes={}-{}'.format(*item), 'Accept-Encoding': '*'}
+    # @staticmethod
+    # def get_headers(offsets):
+        # the return is a generator
+        # return ({'Range': 'Bytes={}-{}'.format(*item), 'Accept-Encoding': '*'} for item in offsets)
+        # for item in offsets:
+        #     # print(item)
+        #     # yield {'Range': 'Bytes=%s-%s' % item, 'Accept-Encoding': '*'}
+        #     # format(*item) is same as % item that put the values in tuple to {} one by one
+        #     yield {'Range': 'Bytes={}-{}'.format(*item), 'Accept-Encoding': '*'}
 
     # request content download, the response code should be 206
     def request_content(self, headers):
@@ -76,7 +78,9 @@ class ContentRequest(object):
     def start(self):
         start_time = time.time()
         offset_range = self.get_offset()
-        headers = self.get_headers(offset_range)
+        # replace the get_headers function with one line  use generator
+        # headers = self.get_headers(offset_range)
+        headers = ({'Range': 'Bytes={}-{}'.format(*item), 'Accept-Encoding': '*'} for item in offset_range)
         threads_list = []
 
         for header in headers:
