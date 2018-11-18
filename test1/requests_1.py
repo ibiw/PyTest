@@ -10,6 +10,12 @@ Logic:
     add offset to new headers
     content request each part of the downloaded file
     threading
+
+HTTP Header:
+    1. request.head
+    {'Date': 'Sun, 18 Nov 2018 15:42:14 GMT', 'Server': 'Apache', 'Last-Modified': 'Fri, 17 Nov 2017 21:04:42 GMT', 'ETag': '"c6c82-55e3415e20e80"', 'Accept-Ranges': 'bytes', 'Content-Length': '814210', 'Keep-Alive': 'timeout=2, max=100', 'Connection': 'Keep-Alive', 'Content-Type': 'application/pdf'}
+    2. request.get
+    {'Date': 'Sun, 18 Nov 2018 15:44:31 GMT', 'Server': 'Apache', 'Last-Modified': 'Fri, 17 Nov 2017 21:04:42 GMT', 'ETag': '"c6c82-55e3415e20e80"', 'Accept-Ranges': 'bytes', 'Content-Length': '8143', 'Content-Range': 'bytes 56994-65136/814210', 'Keep-Alive': 'timeout=2, max=100', 'Connection': 'Keep-Alive', 'Content-Type': 'application/pdf'}
 """
 import requests
 import threading
@@ -29,7 +35,6 @@ class ContentRequest(object):
     def get_offset(self):
         resp = requests.head(self.url)
         self.content_length = int(resp.headers['Content-Length'])
-        print(self.content_length)
         offset = int(self.content_length / self.threads)
         for i in range(self.threads):
             if i < self.threads - 1:
@@ -54,7 +59,7 @@ class ContentRequest(object):
             try:
                 offset = headers['Range'].split('=')[1].split('-')[0]
                 resp = requests.get(self.url, headers=headers)
-                if resp.status_code == 206:
+                if resp.status_code == 206:  # 206 Partial Content
                     self.resp[offset] = resp
                 else:
                     print(resp.status_code)
@@ -80,6 +85,7 @@ class ContentRequest(object):
         offset_range = self.get_offset()
         # replace the get_headers function with one line  use generator
         # headers = self.get_headers(offset_range)
+        # {'Content': 'Bytes=0-81421', 'Accept-Encoding': '*'}
         headers = ({'Range': 'Bytes={}-{}'.format(*item), 'Accept-Encoding': '*'} for item in offset_range)
         threads_list = []
 
@@ -95,8 +101,9 @@ class ContentRequest(object):
             # for resp in self.resp.values():
             self.write_file(self.resp.values())
             time_used = time.time() - start_time
-            speed_kb = self.content_length / time_used / 1000000
-            print('File {} downloaded successful in {} seconds. (speed: {} MB/s)'.format(self.file.split('/')[-1], round(time_used, 2), round(speed_kb, 2)))
+            speed_mb = self.content_length / time_used / 1000000
+            # use round to limit the length after decimal
+            print('File {} downloaded in {} seconds. (Speed: {} MB/s)'.format(self.file.split('/')[-1], round(time_used, 2), round(speed_mb, 2)))
         else:
             print('Error!')
             print(self.reload)
@@ -113,7 +120,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # start_time = time.time()
     main()
-    # print("--- %s seconds ---" % (time.time() - start_time))
+
 
