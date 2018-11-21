@@ -24,6 +24,7 @@ from bs4 import BeautifulSoup
 import requests
 import time
 
+
 # check if there is no build in the server through compare with local exist tags
 def check_tag(url, exist_tags):
     resp = requests.get(url)
