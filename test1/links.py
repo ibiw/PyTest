@@ -36,9 +36,9 @@ def check_tag(url, exist_tags):
             builds.append(link.get('href'))
             # print(link.get('href'))
     f = open(exist_tags, 'r')
-    f.data = f.read()
+    f_data = f.read()
     for build in builds:
-        if build[:-1] not in f.data:  # use [:-1] to remove the '/' in tag
+        if build[:-1] not in f_data:  # use [:-1] to remove the '/' in tag
             tags.append(build)
     if len(tags) == 0:
         print('There is no new build on the Server')
@@ -79,13 +79,10 @@ def get_urls(url, tag):
     return builds
 
 
-
-
 def main():
     # base_url = 'http://172.16.100.71/Images/FortiWeb/v6.00/images/build0058/'
     base_url = 'http://172.16.100.71/Images/FortiWeb/v6.00/images/'
     exist_tags = 'Build_download_test.txt'
-
 
     tags = check_tag(base_url, exist_tags)
 
