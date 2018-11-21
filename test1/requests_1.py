@@ -1,21 +1,21 @@
 """
-Download a file with content requests and threading
-
-Note:
-    must use integer Content-Length, offset in Content-Range, and file seek.
-
-Logic:
-    get Content-Length from request.head(url)
-    calculators offsets through Content-Length and threadings
-    add offset to new headers
-    content request each part of the downloaded file
-    threading
-
-HTTP Header:
-    1. request.head
-    {'Date': 'Sun, 18 Nov 2018 15:42:14 GMT', 'Server': 'Apache', 'Last-Modified': 'Fri, 17 Nov 2017 21:04:42 GMT', 'ETag': '"c6c82-55e3415e20e80"', 'Accept-Ranges': 'bytes', 'Content-Length': '814210', 'Keep-Alive': 'timeout=2, max=100', 'Connection': 'Keep-Alive', 'Content-Type': 'application/pdf'}
-    2. request.get
-    {'Date': 'Sun, 18 Nov 2018 15:44:31 GMT', 'Server': 'Apache', 'Last-Modified': 'Fri, 17 Nov 2017 21:04:42 GMT', 'ETag': '"c6c82-55e3415e20e80"', 'Accept-Ranges': 'bytes', 'Content-Length': '8143', 'Content-Range': 'bytes 56994-65136/814210', 'Keep-Alive': 'timeout=2, max=100', 'Connection': 'Keep-Alive', 'Content-Type': 'application/pdf'}
+    Download a file with content requests and threading
+    
+    Note:
+        must use integer Content-Length, offset in Content-Range, and file seek.
+    
+    Logic:
+        get Content-Length from request.head(url)
+        calculators offsets through Content-Length and threadings
+        add offset to new headers
+        content request each part of the downloaded file
+        threading
+    
+    HTTP Header:
+        1. request.head
+        {'Date': 'Sun, 18 Nov 2018 15:42:14 GMT', 'Server': 'Apache', 'Last-Modified': 'Fri, 17 Nov 2017 21:04:42 GMT', 'ETag': '"c6c82-55e3415e20e80"', 'Accept-Ranges': 'bytes', 'Content-Length': '814210', 'Keep-Alive': 'timeout=2, max=100', 'Connection': 'Keep-Alive', 'Content-Type': 'application/pdf'}
+        2. request.get
+        {'Date': 'Sun, 18 Nov 2018 15:44:31 GMT', 'Server': 'Apache', 'Last-Modified': 'Fri, 17 Nov 2017 21:04:42 GMT', 'ETag': '"c6c82-55e3415e20e80"', 'Accept-Ranges': 'bytes', 'Content-Length': '8143', 'Content-Range': 'bytes 56994-65136/814210', 'Keep-Alive': 'timeout=2, max=100', 'Connection': 'Keep-Alive', 'Content-Type': 'application/pdf'}
 """
 import requests
 import threading
