@@ -71,8 +71,11 @@ def get_urls(url, tag):
         builds.append(md5)
     else:
         print('---{} is not ready yet.'.format(md5))
-        builds = []
+        return []
 
+    # get the url
+    # builds = [url + build for build in builds]  # which one is faster?
+    builds = map(lambda b: url + b, builds)
     return builds
 
 
@@ -84,8 +87,6 @@ def main():
     exist_tags = 'Build_download_test.txt'
 
 
-
-
     tags = check_tag(base_url, exist_tags)
 
     for tag in tags:
@@ -95,4 +96,6 @@ def main():
 
 
 if __name__ == '__main__':
+    t1 = time.time()
     main()
+    print(time.time() - t1)
