@@ -18,7 +18,9 @@
         args: tag, exist_tags(global)
 
     6. log
-        tbd
+        Logger
+
+    7. Email
 """
 from bs4 import BeautifulSoup
 import datetime
@@ -58,16 +60,20 @@ class Logger(object):
         self.logger = logging.getLogger()
 
         # set default log level
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.WARNING)
 
         # create console_handler and file_handler
         self.console_handler = logging.StreamHandler()
         self.file_handler = logging.FileHandler(self.file, 'w')
 
+        # set log level
+        # self.console_handler.addFilter(logging.INFO)
+        # self.file_handler.addFilter(logging.WARNING)
+
         # create file formatter
         self.file_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d  - %(message)s')
-        self.console_formatter = logging.Formatter('%(levelname)s - %(message)s')
+            '%(asctime)s - %(name)s - %(filename)s:%(lineno)d - %(message)s')
+        self.console_formatter = logging.Formatter('--- %(message)s')
 
         # add formatter to handler
         self.console_handler.setFormatter(self.console_formatter)
@@ -80,12 +86,12 @@ class Logger(object):
     def info(self, log_message, *args, **kwargs):
         self.logger.info(log_message)
 
-    def warning(self, log_message):
+    def warning(self, log_message, *args, **kwargs):
         self.logger.warning(log_message)
 
 
-log_file = 'http_download.log'
-l = Logger(log_file)
+# log_file = 'http_download.log'
+log = Logger('http_download.log')
 
 
 class ContentRequest(object):
@@ -118,14 +124,14 @@ class ContentRequest(object):
                 if resp.status_code == 206:  # 206 Partial Content
                     self.resp[offset] = resp
                 else:
-                    l.info(resp.status_code)
+                    log.warning(resp.status_code)
                     self.reload += (headers, )
                 return
             except requests.exceptions.RequestException as e:
-                l.info(e.args)
-                l.info('--Error! Retry in {} seconds...'.format(i * 3))
+                log.warning(e.args)
+                log.warning('--Error! Retry in {} seconds...'.format(i * 3))
                 time.sleep(i * 3)
-        l.info('--Failed to get {} / {} in 5 times retry.'.format(headers, self.file))
+        log.warning('--Failed to get {} / {} in 5 times retry.'.format(headers, self.file))
 
     # save to binary file
     def write_file(self, resp):
@@ -159,10 +165,10 @@ class ContentRequest(object):
             time_used = time.time() - start_time
             speed_mb = self.content_length / time_used / 1000000
             # use round to limit the length after decimal
-            l.info('File {} downloaded in {} seconds. (Speed: {} MB/s)'.format(self.file.split('/')[-1], round(time_used, 2), round(speed_mb, 2)))
+            log.warning('File {} downloaded in {} seconds. (Speed: {} MB/s)'.format(self.file.split('/')[-1], round(time_used, 2), round(speed_mb, 2)))
         else:
-            l.info('Error!')
-            l.info(self.reload)
+            log.warning('Error!')
+            log.warning(self.reload)
 
 
 # check if there is no build in the server through compare with local exist tags
@@ -175,7 +181,7 @@ def check_tag(url, exist_tags):
     for link in links:
         if 'build' in link.get('href'):
             builds.append(link.get('href'))
-            # l.info(link.get('href'))
+            # l.warning(link.get('href'))
     with open(exist_tags, 'r') as f:
         f_data = f.read()
 
@@ -183,10 +189,10 @@ def check_tag(url, exist_tags):
         if build[:-1] not in f_data:  # use [:-1] to remove the '/' in tag
             tags.append(build)
     if len(tags) == 0:
-        l.info('---There is no new build on the Server!')
+        log.warning('There is no new build on the Server!')
         return []
     else:
-        l.info(tags)
+        log.warning(tags)
         return tags
 
 
@@ -206,7 +212,7 @@ def get_urls(url, tag):
         out_url = {url + link.get('href') for link in links if '400D' in link.get('href') if '.out' in link.get('href')}
         return md5_url + list(out_url)
     else:
-        l.info('---{} in {} is not ready yet.'.format(md5, tag))
+        log.warning('---{} in {} is not ready yet.'.format(md5, tag))
         return []
 
 
@@ -222,17 +228,18 @@ def main():
 
     tags = check_tag(base_url, exist_tags)
     if len(tags) == 0:
-        sys.exit('---Exit for there is no new build!')
+        sys.exit('--- Exit for there is no new build!')
 
     for tag in tags:
         urls = get_urls(base_url, tag)
         # download md5sum.txt first, open it, and del its url in the list
         if len(urls) != 0:
+            log.warning('Start to download build: {}'.format(tag[:-1]))
             # new_tag format match previous one(# Home/Images/FortiWeb/v6.00/images/build0058/)
             # in case roll back to old script
             new_tag = (base_url + tag).replace('http://172.16.100.71', '/Home')[:-1] + '\n'
             path += tag  # path used for create local dir
-            l.info('Local Path is: ', path)
+            log.warning('Local Path is: {}'.format(path))
             # make new tag dir
             subprocess.call('mkdir {}'.format(path), shell=True)
 
@@ -254,26 +261,27 @@ def main():
                     checksum = hashlib.md5(open(path + url.split('/')[-1], 'rb').read()).hexdigest()
                     # remove the url if it passed md5 check
                     if checksum in all_md5:
-                        l.info('-md5 check passed in {}/{}'.format(i + 1, n))
+                        log.warning('md5 check passed in {}/{}'.format(i + 1, n))
                         passed_urls.append(url)
                     else:
-                        l.info('---{} md5 check failed'.format(url.split('/')[-1]))
+                        log.warning('{} md5 check failed'.format(url.split('/')[-1]))
 
                 # got the urls that did not passed md5 check
                 urls = list(set(urls) - set(passed_urls))
                 if len(urls) == 0:
-                    l.info('---All files passed md5 check')
+                    log.warning('All files passed md5 check')
+                    log.warning('{} downloaded successfully!\n'.format(tag[:-1]))
                     # write the new tag to exist_tags
                     with open(exist_tags, 'a') as f:
                         f.write(new_tag)
                         path = path.replace(tag, '')  # recover the original path value in case there is more tags
                         break  # exit for loop
                 else:
-                    l.info('---{} files failed md5 check in No.{} times: {}'.format(len(urls), i + 1, urls))
+                    log.warning('---{} files failed md5 check in No.{} times: {}'.format(len(urls), i + 1, urls))
 
 
 if __name__ == '__main__':
     # time.sleep(40000)
     t1 = datetime.datetime.now()
     main()
-    l.info(datetime.datetime.now() - t1)
+    log.warning('Total time used: {}'.format(datetime.datetime.now() - t1))
