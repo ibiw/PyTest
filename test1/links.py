@@ -157,35 +157,21 @@ def check_tag(url, exist_tags):
 # if md5sum.txt is ready, add md5 and *.out* files in the list
 def get_urls(url, tag):
     url += tag
-    builds = []
     md5 = 'md5sum.txt'
 
     resp = requests.get(url)
     soup = BeautifulSoup(resp.content, features="lxml")
     links = soup.find_all('a')
 
-    # get builds with .out includes in its name
-    for link in links:
-        if '.out' in link.get('href') or md5 in link.get('href'):
-        # if '400D' in link.get('href') or md5 in link.get('href'):
-            builds.append(link.get('href'))
-
-    # check if md5 is ready and make sure it is in the first position of the list
-    if builds[-1] == md5:
-        print('---{} founded in position: {}/{}'.format(md5, builds.index(md5), len(builds) - 1))
-        builds.reverse()
-    elif builds[-1] != md5 and md5 in builds:
-        print('---{} founded in position: {}/{}'.format(md5, builds.index(md5), len(builds) - 1))
-        builds.remove(md5)
-        builds.append(md5)
+    # get builds with .out includes in its name if md5sum.txt is ready
+    md5_url = [url + link.get('href') for link in links if md5 in link.get('href')]
+    if len(md5_url) == 1:
+        # out_url = {url + link.get('href') for link in links if '.out' in link.get('href')}
+        out_url = {url + link.get('href') for link in links if '400D' in link.get('href') if '.out' in link.get('href')}
+        return md5_url + list(out_url)
     else:
-        print('---{} is not ready yet.'.format(md5))
+        print('---{} in {} is not ready yet.'.format(md5, tag))
         return []
-
-    # get the url
-    # builds = [url + build for build in builds]  # which one is faster?
-    builds = map(lambda b: url + b, builds)
-    return builds
 
 
 def main():
@@ -203,54 +189,55 @@ def main():
         sys.exit('---Exit for there is no new build!')
 
     for tag in tags:
-        # new_tag format match previous one(# Home/Images/FortiWeb/v6.00/images/build0058/)
-        # in case roll back to old script
-        new_tag = (base_url + tag).replace('http://172.16.100.71', '/Home')[:-1] + '\n'
-        path += tag  # path used for create local dir
-        print(path)
-        # make new tag dir
-        # cmd = 'mkdir {}'.format(path)
-        subprocess.call('mkdir {}'.format(path), shell=True)
         urls = get_urls(base_url, tag)
         # download md5sum.txt first, open it, and del its url in the list
-        d = ContentRequest(urls[0], 1, path)
-        d.start()
-        time.sleep(0.1)
-        all_md5 = open(path + urls[0].split('/')[-1], 'r').read()
-        del urls[0]
+        if len(urls) != 0:
+            # new_tag format match previous one(# Home/Images/FortiWeb/v6.00/images/build0058/)
+            # in case roll back to old script
+            new_tag = (base_url + tag).replace('http://172.16.100.71', '/Home')[:-1] + '\n'
+            path += tag  # path used for create local dir
+            print('Local Path is: ', path)
+            # make new tag dir
+            subprocess.call('mkdir {}'.format(path), shell=True)
 
-        n = 5
-        # try 5 times totally if urls is not empty
-        for i in range(n):
-            passed_urls = []  # for those passed md5 check image
-            for url in urls:
-                d = ContentRequest(url, threads, path)
-                d.start()
+            d = ContentRequest(urls[0], 1, path)
+            d.start()
+            time.sleep(0.1)
+            all_md5 = open(path + urls[0].split('/')[-1], 'r').read()
+            del urls[0]
 
-                checksum = hashlib.md5(open(path + url.split('/')[-1], 'rb').read()).hexdigest()
-                # checksum = hashlib.md5(open('/volume1/FWB/test-image/fwb/build0058/f.txt', 'rb').read()).hexdigest()
-                # remove the url if it passed md5 check
-                if checksum in all_md5:
-                    print('-md5 check passed in {}/{}'.format(i + 1, n))
-                    passed_urls.append(url)
+            n = 5
+            # try 5 times totally if urls is not empty
+            for i in range(n):
+                passed_urls = []  # for those passed md5 check image
+                for url in urls:
+                    d = ContentRequest(url, threads, path)
+                    d.start()
+
+                    # checksum = hashlib.md5(open('*.out', 'rb').read()).hexdigest()
+                    checksum = hashlib.md5(open(path + url.split('/')[-1], 'rb').read()).hexdigest()
+                    # remove the url if it passed md5 check
+                    if checksum in all_md5:
+                        print('-md5 check passed in {}/{}'.format(i + 1, n))
+                        passed_urls.append(url)
+                    else:
+                        print('---{} md5 check failed'.format(url.split('/')[-1]))
+
+                # got the urls that did not passed md5 check
+                urls = list(set(urls) - set(passed_urls))
+                if len(urls) == 0:
+                    print('---All files passed md5 check')
+                    # write the new tag to exist_tags
+                    with open(exist_tags, 'a') as f:
+                        f.write(new_tag)
+                        path = path.replace(tag, '')  # recover the original path value in case there is more tags
+                        break  # exit for loop
                 else:
-                    print('---{} md5 check failed'.format(url.split('/')[-1]))
-
-            # got the urls that did not passed md5 check
-            urls = list(set(urls) - set(passed_urls))
-            if len(urls) == 0:
-                print('---All files passed md5 check')
-                # write the new tag to exist_tags
-                with open(exist_tags, 'a') as f:
-                    f.write(new_tag)
-                    path = path.replace(tag, '')  # recover the original path value in case there is more tags
-                    break  # exit for loop
-            else:
-                print('---{} files failed md5 check in No.{} times: {}'.format(len(urls), i + 1, urls))
+                    print('---{} files failed md5 check in No.{} times: {}'.format(len(urls), i + 1, urls))
 
 
 if __name__ == '__main__':
-    time.sleep(40000)
+    # time.sleep(40000)
     t1 = datetime.datetime.now()
     main()
     print(datetime.datetime.now() - t1)
