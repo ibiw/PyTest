@@ -27,10 +27,10 @@ class Logger(object):
         self.logger.addHandler(self.console_handler)
         self.logger.addHandler(self.file_handler)
 
-    def info(self, log_message):
+    def info(self, log_message, *args, **kwargs):
         self.logger.info(log_message)
 
-    def warning(self, log_message):
+    def warning(self, log_message, *args, **kwargs):
         self.logger.warning(log_message)
 
 

@@ -21,8 +21,6 @@
         tbd
 """
 from bs4 import BeautifulSoup
-import requests
-import time
 import datetime
 import requests
 import threading
@@ -30,6 +28,7 @@ import time
 import hashlib
 import subprocess
 import sys
+import logging
 
 """
     Download a file with content requests and threading
@@ -50,6 +49,43 @@ import sys
         2. request.get
         {'Date': 'Sun, 18 Nov 2018 15:44:31 GMT', 'Server': 'Apache', 'Last-Modified': 'Fri, 17 Nov 2017 21:04:42 GMT', 'ETag': '"c6c82-55e3415e20e80"', 'Accept-Ranges': 'bytes', 'Content-Length': '8143', 'Content-Range': 'bytes 56994-65136/814210', 'Keep-Alive': 'timeout=2, max=100', 'Connection': 'Keep-Alive', 'Content-Type': 'application/pdf'}
 """
+
+
+class Logger(object):
+    def __init__(self, file_name):
+        self.file = file_name
+        # create logger
+        self.logger = logging.getLogger()
+
+        # set default log level
+        self.logger.setLevel(logging.DEBUG)
+
+        # create console_handler and file_handler
+        self.console_handler = logging.StreamHandler()
+        self.file_handler = logging.FileHandler(self.file, 'w')
+
+        # create file formatter
+        self.file_formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d  - %(message)s')
+        self.console_formatter = logging.Formatter('%(levelname)s - %(message)s')
+
+        # add formatter to handler
+        self.console_handler.setFormatter(self.console_formatter)
+        self.file_handler.setFormatter(self.file_formatter)
+
+        # add handlers to logger
+        self.logger.addHandler(self.console_handler)
+        self.logger.addHandler(self.file_handler)
+
+    def info(self, log_message, *args, **kwargs):
+        self.logger.info(log_message)
+
+    def warning(self, log_message):
+        self.logger.warning(log_message)
+
+
+log_file = 'http_download.log'
+l = Logger(log_file)
 
 
 class ContentRequest(object):
@@ -82,14 +118,14 @@ class ContentRequest(object):
                 if resp.status_code == 206:  # 206 Partial Content
                     self.resp[offset] = resp
                 else:
-                    print(resp.status_code)
+                    l.info(resp.status_code)
                     self.reload += (headers, )
                 return
             except requests.exceptions.RequestException as e:
-                print(e.args)
-                print('--Error! Retry in {} seconds...'.format(i * 3))
+                l.info(e.args)
+                l.info('--Error! Retry in {} seconds...'.format(i * 3))
                 time.sleep(i * 3)
-        print('--Failed to get {} / {} in 5 times retry.'.format(headers, self.file))
+        l.info('--Failed to get {} / {} in 5 times retry.'.format(headers, self.file))
 
     # save to binary file
     def write_file(self, resp):
@@ -123,10 +159,10 @@ class ContentRequest(object):
             time_used = time.time() - start_time
             speed_mb = self.content_length / time_used / 1000000
             # use round to limit the length after decimal
-            print('File {} downloaded in {} seconds. (Speed: {} MB/s)'.format(self.file.split('/')[-1], round(time_used, 2), round(speed_mb, 2)))
+            l.info('File {} downloaded in {} seconds. (Speed: {} MB/s)'.format(self.file.split('/')[-1], round(time_used, 2), round(speed_mb, 2)))
         else:
-            print('Error!')
-            print(self.reload)
+            l.info('Error!')
+            l.info(self.reload)
 
 
 # check if there is no build in the server through compare with local exist tags
@@ -139,7 +175,7 @@ def check_tag(url, exist_tags):
     for link in links:
         if 'build' in link.get('href'):
             builds.append(link.get('href'))
-            # print(link.get('href'))
+            # l.info(link.get('href'))
     with open(exist_tags, 'r') as f:
         f_data = f.read()
 
@@ -147,10 +183,10 @@ def check_tag(url, exist_tags):
         if build[:-1] not in f_data:  # use [:-1] to remove the '/' in tag
             tags.append(build)
     if len(tags) == 0:
-        print('---There is no new build on the Server!')
+        l.info('---There is no new build on the Server!')
         return []
     else:
-        print(tags)
+        l.info(tags)
         return tags
 
 
@@ -170,7 +206,7 @@ def get_urls(url, tag):
         out_url = {url + link.get('href') for link in links if '400D' in link.get('href') if '.out' in link.get('href')}
         return md5_url + list(out_url)
     else:
-        print('---{} in {} is not ready yet.'.format(md5, tag))
+        l.info('---{} in {} is not ready yet.'.format(md5, tag))
         return []
 
 
@@ -196,7 +232,7 @@ def main():
             # in case roll back to old script
             new_tag = (base_url + tag).replace('http://172.16.100.71', '/Home')[:-1] + '\n'
             path += tag  # path used for create local dir
-            print('Local Path is: ', path)
+            l.info('Local Path is: ', path)
             # make new tag dir
             subprocess.call('mkdir {}'.format(path), shell=True)
 
@@ -218,26 +254,26 @@ def main():
                     checksum = hashlib.md5(open(path + url.split('/')[-1], 'rb').read()).hexdigest()
                     # remove the url if it passed md5 check
                     if checksum in all_md5:
-                        print('-md5 check passed in {}/{}'.format(i + 1, n))
+                        l.info('-md5 check passed in {}/{}'.format(i + 1, n))
                         passed_urls.append(url)
                     else:
-                        print('---{} md5 check failed'.format(url.split('/')[-1]))
+                        l.info('---{} md5 check failed'.format(url.split('/')[-1]))
 
                 # got the urls that did not passed md5 check
                 urls = list(set(urls) - set(passed_urls))
                 if len(urls) == 0:
-                    print('---All files passed md5 check')
+                    l.info('---All files passed md5 check')
                     # write the new tag to exist_tags
                     with open(exist_tags, 'a') as f:
                         f.write(new_tag)
                         path = path.replace(tag, '')  # recover the original path value in case there is more tags
                         break  # exit for loop
                 else:
-                    print('---{} files failed md5 check in No.{} times: {}'.format(len(urls), i + 1, urls))
+                    l.info('---{} files failed md5 check in No.{} times: {}'.format(len(urls), i + 1, urls))
 
 
 if __name__ == '__main__':
     # time.sleep(40000)
     t1 = datetime.datetime.now()
     main()
-    print(datetime.datetime.now() - t1)
+    l.info(datetime.datetime.now() - t1)
