@@ -112,10 +112,11 @@ class ContentRequest(object):
 def main():
     # get Content-Size
     url = 'http://greenteapress.com/thinkpython2/thinkpython2.pdf'
+    url2 = 'http://cdimage.debian.org/debian-cd/current/amd64/iso-dvd/debian-9.6.0-amd64-DVD-1.iso'
     threads = 100
-    path = '/home/rw/Downloads/'
+    path = '/home/rw/'
 
-    d = ContentRequest(url, threads, path)
+    d = ContentRequest(url2, threads, path)
     d.start()
 
 
