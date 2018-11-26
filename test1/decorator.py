@@ -17,6 +17,7 @@ def timer(func):
 
 
 def double_rapper(func):
+    """a double decorators test"""
     @wraps(func)
     def rapper(*args, **kwargs):
         print('I am going to run {}'.format(func.__name__))
@@ -27,14 +28,16 @@ def double_rapper(func):
 
 @timer
 @double_rapper
-def test(n):
-    time.sleep(n)
-    print('Sleep {} seconds'.format(n))
+def test(time_wait):
+    """a test function"""
+    time.sleep(time_wait)
+    print('Sleep {} seconds'.format(time_wait))
 
 
 @timer
 @double_rapper
 def greeting(name):
+    """another decorator test"""
     print('Hello ', name)
 
 
