@@ -6,6 +6,12 @@ import numpy as np
     https://www.superdatascience.com/opencv-face-detection/
     pip install opencv-contrib-python
     https://www.superdatascience.com/opencv-face-recognition/
+    https://www.datacamp.com/community/tutorials/face-detection-python-opencv
+    img = cv2.cvtColor(img_raw, cv2.COLOR_BGR2RGB)
+    https://www.cvlib.net/
+    https://keras.io/
+    https://github.com/arunponnusamy/object-detection-opencv
+    
 """
 
 def get_files(path, sub_dir=False):
@@ -65,7 +71,7 @@ def detect_face(img):
 
     # let's detect multiscale images(some images may be closer to camera than others)
     # result is a list of faces
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5);
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5)
 
     # if no faces are detected then return original img
     if (len(faces) == 0):
@@ -75,6 +81,7 @@ def detect_face(img):
     # extract the face area
     x, y, w, h = faces[0]
 
+    print(faces[0])
     # return only the face part of the image
     return gray[y:y + w, x:x + h], faces[0]
 
@@ -145,14 +152,16 @@ def prepare_training_data(data_folder_path):
                 faces.append(face)
                 # add label for this face
                 labels.append(label)
+                print(label)
             else:
                 print('None')
                 cv2.imshow("Training on image...", image)
-                cv2.waitKey(100)
+                cv2.waitKey(1000)
 
     cv2.destroyAllWindows()
     cv2.waitKey(1)
     cv2.destroyAllWindows()
+
 
     return faces, labels
 
@@ -219,7 +228,7 @@ print("Predicting images...")
 # test_img1 = cv2.imread("test-data/test1.jpg")
 # test_img2 = cv2.imread("test-data/test2.jpg")
 
-test_img1 = cv2.imread('/home/rw/Pictures/test/test/liu2.jpeg')
+test_img1 = cv2.imread('/home/rw/Pictures/test/test/liu1.jpeg')
 test_img2 = cv2.imread('/home/rw/Pictures/test/test/zhang3.jpeg')
 
 # perform a prediction
