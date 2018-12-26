@@ -42,6 +42,25 @@ lbp_face_cascade = cv2.CascadeClassifier(
 subjects = ["", "Andy Liu", "Jacky Zhang"]
 
 
+def face_detect_cvlib(files):
+    for file in files:
+
+        raw_img = cv2.imread(file)
+        faces, confidences = cv.detect_face(raw_img)
+        for face in faces:
+            print(raw_img.shape)
+            x1, y1, x2, y2 = face
+            print(x1, y1, x2, y2)
+            new_img = raw_img[y1:y2, x1:x2]
+            draw_rectangle(raw_img, face)
+            print(face)
+
+
+        cv2.imshow('Face', new_img)
+        cv2.waitKey(1000)
+    cv2.destroyAllWindows()
+
+
 def detect_faces(f_cascade, colored_img, scale_factor=1.2):
     # just making a copy of image passed, so that passed image is not changed
     img_copy = colored_img.copy()
@@ -71,7 +90,7 @@ def detect_face(img):
 
     # let's detect multiscale images(some images may be closer to camera than others)
     # result is a list of faces
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.5, minNeighbors=5)
 
     # if no faces are detected then return original img
     if (len(faces) == 0):

@@ -2,6 +2,23 @@ import cv2
 import cvlib as cv
 from cvlib.object_detection import draw_bbox
 import os
+import face_recognition
+
+
+def face_detection(files):
+    if type(files) is str:
+        files = [files]
+
+    for file in files:
+        img = cv2.imread(file)
+        image = face_recognition.load_image_file(file)
+        face_locations = face_recognition.face_locations(image, model='cnn')
+        for face_location in face_locations:
+            print(face_location)
+            draw_rectangle(img, face_location)
+            cv2.imshow('Face_Detection', img)
+            cv2.waitKey(2000)
+    cv2.destroyAllWindows()
 
 
 def draw_rectangle(img, rect):
@@ -21,6 +38,25 @@ def get_files(path, sub_dir=False):
             return
 
 
+# def face_detect_cvlib(files):
+#     for file in files:
+#
+#         raw_img = cv2.imread(file)
+#         faces, confidences = cv.detect_face(raw_img)
+#         for face in faces:
+#             print(raw_img.shape)
+#             x1, y1, x2, y2 = face
+#             print(x1, y1, x2, y2)
+#             new_img = raw_img[y1:y2, x1:x2]
+#             draw_rectangle(raw_img, face)
+#             print(face)
+#
+#
+#         cv2.imshow('Face', new_img)
+#         cv2.waitKey(1000)
+#     cv2.destroyAllWindows()
+
+
 def face_detect_cvlib(files):
     for file in files:
 
@@ -31,8 +67,6 @@ def face_detect_cvlib(files):
 
         cv2.imshow('Face', raw_img)
         cv2.waitKey(1000)
-    cv2.destroyAllWindows()
-
 
 def obj_detect(files):
     if type(files) is str:
@@ -49,7 +83,8 @@ def obj_detect(files):
         cv2.destroyAllWindows()
 
 
-path = '/home/rw/Pictures/test/t5.jpeg'
+path = '/home/rw/Pictures/test/test'
 
-# files = get_files(path, sub_dir=False)
-obj_detect(path)
+files = get_files(path, sub_dir=True)
+# face_detection(files)
+face_detect_cvlib(files)
