@@ -14,6 +14,7 @@ import numpy as np
     
 """
 
+
 def get_files(path, sub_dir=False):
     """get all files of the current folder"""
     for dirs, sub_dirs, _files in os.walk(path, topdown=True):
@@ -43,22 +44,23 @@ subjects = ["", "Andy Liu", "Jacky Zhang"]
 
 
 def face_detect_cvlib(files):
+
     for file in files:
 
         raw_img = cv2.imread(file)
-        faces, confidences = cv.detect_face(raw_img)
-        for face in faces:
+        locations, confidences = cv.detect_face(raw_img)
+        for location in locations:
             print(raw_img.shape)
-            x1, y1, x2, y2 = face
+            x1, y1, x2, y2 = location
             print(x1, y1, x2, y2)
             new_img = raw_img[y1:y2, x1:x2]
-            draw_rectangle(raw_img, face)
-            print(face)
+            draw_rectangle(raw_img, location)
+            print(location)
 
 
-        cv2.imshow('Face', new_img)
-        cv2.waitKey(1000)
-    cv2.destroyAllWindows()
+        # cv2.imshow('Face', new_img)
+        # cv2.waitKey(1000)
+    # cv2.destroyAllWindows()
 
 
 def detect_faces(f_cascade, colored_img, scale_factor=1.2):

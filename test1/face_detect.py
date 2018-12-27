@@ -38,35 +38,36 @@ def get_files(path, sub_dir=False):
             return
 
 
-# def face_detect_cvlib(files):
-#     for file in files:
-#
-#         raw_img = cv2.imread(file)
-#         faces, confidences = cv.detect_face(raw_img)
-#         for face in faces:
-#             print(raw_img.shape)
-#             x1, y1, x2, y2 = face
-#             print(x1, y1, x2, y2)
-#             new_img = raw_img[y1:y2, x1:x2]
-#             draw_rectangle(raw_img, face)
-#             print(face)
-#
-#
-#         cv2.imshow('Face', new_img)
-#         cv2.waitKey(1000)
-#     cv2.destroyAllWindows()
-
-
 def face_detect_cvlib(files):
     for file in files:
 
         raw_img = cv2.imread(file)
         faces, confidences = cv.detect_face(raw_img)
         for face in faces:
+            print(raw_img.shape)
+            x1, y1, x2, y2 = face
+            print(x1, y1, x2, y2)
+            new_img = raw_img[y1:y2, x1:x2]
+            print(type(new_img))
             draw_rectangle(raw_img, face)
+            print(face)
 
-        cv2.imshow('Face', raw_img)
+
+        cv2.imshow('Face', new_img)
         cv2.waitKey(1000)
+    cv2.destroyAllWindows()
+
+
+# def face_detect_cvlib(files):
+#     for file in files:
+#
+#         raw_img = cv2.imread(file)
+#         faces, confidences = cv.detect_face(raw_img)
+#         for face in faces:
+#             draw_rectangle(raw_img, face)
+#
+#         cv2.imshow('Face', raw_img)
+#         cv2.waitKey(1000)
 
 def obj_detect(files):
     if type(files) is str:
