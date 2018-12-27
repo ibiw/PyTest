@@ -6,10 +6,9 @@ import face_recognition
 
 
 def face_detection(files):
-    if type(files) is str:
-        files = [files]
+    _files = [files] if type(files) is str else files
 
-    for file in files:
+    for file in _files:
         img = cv2.imread(file)
         image = face_recognition.load_image_file(file)
         face_locations = face_recognition.face_locations(image, model='cnn')
@@ -39,7 +38,9 @@ def get_files(path, sub_dir=False):
 
 
 def face_detect_cvlib(files):
-    for file in files:
+    _files = [files] if type(files) is str else files
+
+    for file in _files:
 
         raw_img = cv2.imread(file)
         faces, confidences = cv.detect_face(raw_img)
@@ -52,11 +53,30 @@ def face_detect_cvlib(files):
             draw_rectangle(raw_img, face)
             print(face)
 
-
         cv2.imshow('Face', new_img)
         cv2.waitKey(1000)
     cv2.destroyAllWindows()
 
+
+def face_get_cvlib(files):
+    _files = [files] if type(files) is str else files
+
+    for file in _files:
+
+        raw_img = cv2.imread(file)
+        faces, confidences = cv.detect_face(raw_img)
+        for face in faces:
+            print(raw_img.shape)
+            x1, y1, x2, y2 = face
+            print(x1, y1, x2, y2)
+            new_img = raw_img[y1:y2, x1:x2]
+            print(type(new_img))
+            draw_rectangle(raw_img, face)
+            print(face)
+
+        cv2.imshow('Face', new_img)
+        cv2.waitKey(1000)
+    cv2.destroyAllWindows()
 
 # def face_detect_cvlib(files):
 #     for file in files:
@@ -69,11 +89,11 @@ def face_detect_cvlib(files):
 #         cv2.imshow('Face', raw_img)
 #         cv2.waitKey(1000)
 
-def obj_detect(files):
-    if type(files) is str:
-        files = [files]
 
-    for file in files:
+def obj_detect(files):
+    _files = [files] if type(files) is str else files
+
+    for file in _files:
         raw_img = cv2.imread(file)
         bbox, label, conf = cv.detect_common_objects(raw_img)
         print(bbox, label, conf)
@@ -86,6 +106,6 @@ def obj_detect(files):
 
 path = '/home/rw/Pictures/test/test'
 
-files = get_files(path, sub_dir=True)
+file_list = get_files(path, sub_dir=True)
 # face_detection(files)
-face_detect_cvlib(files)
+face_detect_cvlib(file_list)
