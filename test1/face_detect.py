@@ -43,40 +43,58 @@ def face_detect_cvlib(files):
     for file in _files:
 
         raw_img = cv2.imread(file)
-        faces, confidences = cv.detect_face(raw_img)
-        for face in faces:
-            print(raw_img.shape)
-            x1, y1, x2, y2 = face
-            print(x1, y1, x2, y2)
-            new_img = raw_img[y1:y2, x1:x2]
-            print(type(new_img))
-            draw_rectangle(raw_img, face)
-            print(face)
+        try:
+            faces, confidences = cv.detect_face(raw_img)
+            print(faces)
+            for face in faces:
+                print(raw_img.shape)
+                x1, y1, x2, y2 = face
+                print(x1, y1, x2, y2)
+                new_img = raw_img[y1:y2, x1:x2]
+                print(type(new_img))
+                draw_rectangle(raw_img, face)
+                print(face)
 
-        cv2.imshow('Face', new_img)
-        cv2.waitKey(1000)
+            cv2.imshow('Face', new_img)
+            cv2.waitKey(3000)
+        except cv2.error:
+            print('{} -- not foound!'.format(file))
     cv2.destroyAllWindows()
 
 
 def face_get_cvlib(files):
+    """return gray face img and its locations"""
     _files = [files] if type(files) is str else files
 
     for file in _files:
+        __faces = []
 
         raw_img = cv2.imread(file)
-        faces, confidences = cv.detect_face(raw_img)
-        for face in faces:
-            print(raw_img.shape)
-            x1, y1, x2, y2 = face
-            print(x1, y1, x2, y2)
-            new_img = raw_img[y1:y2, x1:x2]
-            print(type(new_img))
-            draw_rectangle(raw_img, face)
-            print(face)
+        try:
+            face_locations, confidences = cv.detect_face(raw_img)
+            print(face_locations)
+            for face_location in face_locations:
+                print(raw_img.shape)
+                x1, y1, x2, y2 = face_location
+                print(x1, y1, x2, y2)
+                # new_img = raw_img[y1:y2, x1:x2]
+                new_img = cv2.cvtColor(raw_img[y1:y2, x1:x2], cv2.COLOR_BGR2GRAY)
+                __faces.append(new_img)
+        except cv2.error:
+            print('{} -- no face detected'.format(file))
 
-        cv2.imshow('Face', new_img)
-        cv2.waitKey(1000)
-    cv2.destroyAllWindows()
+    #         print(type(new_img))
+    #         draw_rectangle(raw_img, face_location)
+    #         print(face_location)
+    #
+    #     cv2.imshow('Face', raw_img)
+    #     cv2.waitKey(1000)
+    # cv2.destroyAllWindows()
+        if __faces:
+            return __faces, face_locations
+        else:
+            return None, None
+
 
 # def face_detect_cvlib(files):
 #     for file in files:

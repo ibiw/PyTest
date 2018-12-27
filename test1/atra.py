@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+import cvlib as cv
 
 """
     https://www.superdatascience.com/opencv-face-detection/
@@ -107,6 +108,40 @@ def detect_face(img):
     return gray[y:y + w, x:x + h], faces[0]
 
 
+def face_get_cvlib(files):
+    """return gray face img and its locations"""
+    _files = [files] if type(files) is not list else files
+
+    for file in _files:
+        __faces = []
+
+        raw_img = cv2.imread(file) if type(file) is str else file
+        try:
+            face_locations, confidences = cv.detect_face(raw_img)
+            for face_location in face_locations:
+                print(face_location)
+                # print(raw_img.shape)
+                x1, y1, x2, y2 = face_location
+                # print(x1, y1, x2, y2)
+                # new_img = raw_img[y1:y2, x1:x2]
+                new_img = cv2.cvtColor(raw_img[y1:y2, x1:x2], cv2.COLOR_BGR2GRAY)
+                __faces.append(new_img)
+        except cv2.error:
+            print('{} -- face not detected'.format(file))
+
+    #         print(type(new_img))
+    #         draw_rectangle(raw_img, face_location)
+    #         print(face_location)
+    #
+    #     cv2.imshow('Face', raw_img)
+    #     cv2.waitKey(1000)
+    # cv2.destroyAllWindows()
+        if __faces:
+            return __faces, face_locations
+        else:
+            return None, None
+
+
 # this function will read all persons' training images, detect face from each image
 # and will return two lists of exactly same size, one list
 # of faces and another list of labels for each face
@@ -157,18 +192,22 @@ def prepare_training_data(data_folder_path):
             print(image_path)
 
             # read image
-            image = cv2.imread(image_path)
+            # image = cv2.imread(image_path)
 
             # display an image window to show the image
 
 
             # detect face
-            face, rect = detect_face(image)
+            # face, rect = detect_face(image)
+            face, rect = face_get_cvlib(image_path)
+
 
             # ------STEP-4--------
             # for the purpose of this tutorial
             # we will ignore faces that are not detected
             if face is not None:
+                # training date only has one face
+                face = face[0]
                 # add face to list of faces
                 faces.append(face)
                 # add label for this face
@@ -183,18 +222,18 @@ def prepare_training_data(data_folder_path):
     cv2.waitKey(1)
     cv2.destroyAllWindows()
 
-
     return faces, labels
 
-#let's first prepare our training data
-#data will be in two lists of same size
-#one list will contain all the faces
-#and the other list will contain respective labels for each face
+
+# let's first prepare our training data
+# data will be in two lists of same size
+# one list will contain all the faces
+# and the other list will contain respective labels for each face
 print("Preparing data...")
 faces, labels = prepare_training_data("/home/rw/Pictures/test")
 print("Data prepared")
 
-#print total faces and labels
+# print total faces and labels
 print("Total faces: ", len(faces))
 print("Total labels: ", len(labels))
 
@@ -202,7 +241,7 @@ print("Total labels: ", len(labels))
 # face_recognizer = cv2.face.createLBPHFaceRecognizer()
 face_recognizer = cv2.face.LBPHFaceRecognizer_create()
 
-#train our face recognizer of our training faces
+# train our face recognizer of our training faces
 face_recognizer.train(faces, np.array(labels))
 
 
@@ -211,7 +250,8 @@ face_recognizer.train(faces, np.array(labels))
 # given width and heigh
 def draw_rectangle(img, rect):
     (x, y, w, h) = rect
-    cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    cv2.rectangle(img, (x, y), (w, h), (0, 255, 0), 2)
 
 ###
 # function to draw text on give image starting from
@@ -223,25 +263,55 @@ def draw_text(img, text, x, y):
 # this function recognizes the person in image passed
 # and draws a rectangle around detected face with name of the
 # subject
+# def predict(test_img):
+#     # make a copy of the image as we don't want to change original image
+#     img = test_img.copy()
+#     # detect face from the image
+#     # face, rect = detect_face(img)
+#     face, rect = face_get_cvlib(img)
+#     face = face[0]
+#     rect = rect[0]
+#
+#
+#     # predict the image using our face recognizer
+#     label = face_recognizer.predict(face)
+#     print(label)
+#     # get name of respective label returned by face recognizer
+#     label_text = subjects[label[0]]
+#
+#     # draw a rectangle around face detected
+#     draw_rectangle(img, rect)
+#     # draw name of predicted person
+#     draw_text(img, label_text, rect[0], rect[1] - 5)
+#
+#     return img
+
 def predict(test_img):
     # make a copy of the image as we don't want to change original image
     img = test_img.copy()
     # detect face from the image
-    face, rect = detect_face(img)
+    # face, rect = detect_face(img)
+    _faces, _rects = face_get_cvlib(img)
+    # print(_faces, _rects)
+    # if len(_rects) == 1:
+    #     _faces = [_faces]
+    #     _rects = [_rects]
 
-    # predict the image using our face recognizer
-    label = face_recognizer.predict(face)
-    print(label)
-    # get name of respective label returned by face recognizer
-    label_text = subjects[label[0]]
+    for i, face, in enumerate(_faces):
 
-    # draw a rectangle around face detected
-    draw_rectangle(img, rect)
-    # draw name of predicted person
-    draw_text(img, label_text, rect[0], rect[1] - 5)
+        rect = _rects[i]
+        # predict the image using our face recognizer
+        label = face_recognizer.predict(face)
+        print(label)
+        # get name of respective label returned by face recognizer
+        label_text = subjects[label[0]]
+
+        # draw a rectangle around face detected
+        draw_rectangle(img, rect)
+        # draw name of predicted person
+        draw_text(img, label_text, rect[0], rect[1] - 5)
 
     return img
-
 
 print("Predicting images...")
 
@@ -249,8 +319,8 @@ print("Predicting images...")
 # test_img1 = cv2.imread("test-data/test1.jpg")
 # test_img2 = cv2.imread("test-data/test2.jpg")
 
-test_img1 = cv2.imread('/home/rw/Pictures/test/test/liu1.jpeg')
-test_img2 = cv2.imread('/home/rw/Pictures/test/test/zhang3.jpeg')
+test_img1 = cv2.imread('/home/rw/Pictures/test/test/liu2.jpeg')
+test_img2 = cv2.imread('/home/rw/Pictures/test/test/zhang1.jpeg')
 
 # perform a prediction
 predicted_img1 = predict(test_img1)
