@@ -55,7 +55,7 @@ def face_detect_cvlib(files):
                 draw_rectangle(raw_img, face)
                 print(face)
 
-            cv2.imshow('Face', new_img)
+            cv2.imshow('Face', raw_img)
             cv2.waitKey(3000)
         except cv2.error:
             print('{} -- not foound!'.format(file))
@@ -122,7 +122,7 @@ def obj_detect(files):
         cv2.destroyAllWindows()
 
 
-path = '/home/rw/Pictures/test/test'
+path = '/home/rw/Pictures/unknow'
 
 file_list = get_files(path, sub_dir=True)
 # face_detection(files)

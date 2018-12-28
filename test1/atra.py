@@ -41,7 +41,7 @@ lbp_face_cascade = cv2.CascadeClassifier(
     '/home/rw/anaconda3/lib/python3.6/site-packages/cv2/data/lbpcascade_frontalface.xml')
 
 #there is no label 0 in our training data so subject name for index/label 0 is empty
-subjects = ["", "Andy Liu", "Jacky Zhang"]
+subjects = ["", "Liu", "Jacky"]
 
 
 def face_detect_cvlib(files):
@@ -93,7 +93,7 @@ def detect_face(img):
 
     # let's detect multiscale images(some images may be closer to camera than others)
     # result is a list of faces
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.5, minNeighbors=5)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5)
 
     # if no faces are detected then return original img
     if (len(faces) == 0):
@@ -241,6 +241,7 @@ print("Total labels: ", len(labels))
 # face_recognizer = cv2.face.createLBPHFaceRecognizer()
 face_recognizer = cv2.face.LBPHFaceRecognizer_create()
 
+
 # train our face recognizer of our training faces
 face_recognizer.train(faces, np.array(labels))
 
@@ -319,8 +320,8 @@ print("Predicting images...")
 # test_img1 = cv2.imread("test-data/test1.jpg")
 # test_img2 = cv2.imread("test-data/test2.jpg")
 
-test_img1 = cv2.imread('/home/rw/Pictures/test/test/liu2.jpeg')
-test_img2 = cv2.imread('/home/rw/Pictures/test/test/zhang1.jpeg')
+test_img1 = cv2.imread('/home/rw/Pictures/test/test/p2.jpeg')
+test_img2 = cv2.imread('/home/rw/Pictures/test/test/p2.jpeg')
 
 # perform a prediction
 predicted_img1 = predict(test_img1)
